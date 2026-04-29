@@ -93,7 +93,7 @@
     .metric-card .label{font-size:var(--text-sm);color:var(--color-text-muted);}
     .metric-card .value{font-size:var(--text-lg);font-weight:700;font-variant-numeric:tabular-nums;}
     .progress{width:100%;height:.65rem;background:rgba(40,37,29,.08);border-radius:var(--radius-full);overflow:hidden;margin-top:.75rem;}
-    .progress>span{display:block;height:100%;border-radius:inherit;transition:width .4s cubic-bezier(.16,1,.3,1);}
+    .progress>span{display:block;height:100%;min-height:.65rem;border-radius:inherit;transition:width .4s cubic-bezier(.16,1,.3,1);}
     .bar-kcal{background:var(--color-primary);}
     .bar-protein{background:var(--color-success);}
     .bar-carbs{background:#c68b26;}
@@ -1480,151 +1480,270 @@ function hideResults() {
   $('foodSearch').setAttribute('aria-expanded','false');
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// FOOD SEARCH & SERVING — unified, hardened rebuild
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Search result renderer ───────────────────────────────────────────────────
 function renderResults(foods, source) {
   const box = $('searchResults');
-  if(!foods.length){ box.innerHTML = '<div class="search-hint">No results found. Try a different name or switch databases.</div>'; box.style.display='block'; return; }
+  if (!foods.length) {
+    box.innerHTML = '<div class="search-hint">No results found. Try a different name or switch databases.</div>';
+    box.style.display = 'block';
+    return;
+  }
   box.innerHTML = '';
   box.style.display = 'block';
+
   const badgeFor = (food) => {
     const s = food._source || source;
-    if (s === 'local') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:color-mix(in oklab,var(--color-primary) 10%,var(--color-surface-offset));color:var(--color-primary);margin-left:.4rem;">Quick Pick</span>';
-    if (s === 'off') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">Open Food Facts</span>';
-    if (s === 'usda') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">USDA</span>';
+    const base = 'font-size:.7rem;padding:.15rem .45rem;border-radius:4px;margin-left:.4rem;';
+    if (s === 'local')  return `<span style="${base}background:color-mix(in oklab,var(--color-primary) 12%,var(--color-surface-offset));color:var(--color-primary);">Quick Pick</span>`;
+    if (s === 'off')    return `<span style="${base}background:var(--color-surface-offset);color:var(--color-text-muted);">Open Food Facts</span>`;
+    if (s === 'usda')   return `<span style="${base}background:var(--color-surface-offset);color:var(--color-text-muted);">USDA</span>`;
     return '';
   };
+
   foods.forEach(food => {
     const item = document.createElement('div');
     item.className = 'search-result-item';
-    item.setAttribute('role','option');
-    const cal = getNutrientValue(food.foodNutrients, 1008);
-    const pro = getNutrientValue(food.foodNutrients, 1003);
+    item.setAttribute('role', 'option');
+    const cal  = getNutrientValue(food.foodNutrients, 1008);
+    const pro  = getNutrientValue(food.foodNutrients, 1003);
     const carb = getNutrientValue(food.foodNutrients, 1005);
-    const fat = getNutrientValue(food.foodNutrients, 1004);
-    const serving = food.servingSize ? ` · ${food.servingSize}${food.servingSizeUnit||'g'} serving` : '';
-    const brand = food.brandOwner || (source === 'off' ? 'Open Food Facts' : food.dataType || '');
+    const fat  = getNutrientValue(food.foodNutrients, 1004);
+    const brand = food.brandOwner || (food._source === 'off' ? 'Open Food Facts' : food.dataType || '');
+    // Show serving size in result card if available so user can pick wisely
+    const _sGrams = normalizeToGrams(food.servingSize, food.servingSizeUnit);
+    const servingHint = (_sGrams && _sGrams > 0 && _sGrams < 5000)
+      ? `<span style="font-size:.7rem;color:var(--color-primary);margin-left:.4rem;">${Math.round(_sGrams)}g serving</span>`
+      : '';
     item.innerHTML = `
-      <div class="sri-name">${escHtml(food.description)}${badgeFor(food)}</div>
-      <div class="sri-meta">${escHtml(brand)}${serving}</div>
+      <div class="sri-name">${escHtml(food.description)}${badgeFor(food)}${servingHint}</div>
+      <div class="sri-meta">${escHtml(brand)}</div>
       <div class="sri-macros">${cal} kcal · P ${pro}g · C ${carb}g · F ${fat}g per 100g</div>`;
     item.addEventListener('click', () => selectFood(food));
     box.appendChild(item);
   });
 }
 
+// ── Serving index picker — priority-ordered ──────────────────────────────────
 function pickBestServingIndex(servingOptions) {
   if (!Array.isArray(servingOptions) || !servingOptions.length) return 0;
+  const valid = servingOptions
+    .map((o, i) => ({ o, i }))
+    .filter(x => x.o && !x.o.disabled && Number(x.o.grams) > 0 && !x.o._isRef);
+
+  if (!valid.length) return 0;
+
   const labels = servingOptions.map(o => String(o?.label || '').toLowerCase());
-  const valid = servingOptions.map((o, i) => ({ o, i })).filter(x => x.o && !x.o.disabled && Number(x.o.grams) > 0);
-  const servingLike = valid.find(x => /(serving|container|package|pack|bottle|can|bar|piece|slice|cup|wrap|sandwich)/.test(labels[x.i]) && !/^100g/.test(labels[x.i]) && !/^1g/.test(labels[x.i]));
-  if (servingLike) return servingLike.i;
-  const non100g = valid.find(x => !/^100g/.test(labels[x.i]));
-  if (non100g) return non100g.i;
-  return valid[0]?.i || 0;
+
+  // Priority 1: Named USDA branded servings (not 100g / 1g refs)
+  const namedUsda = valid.find(x =>
+    !/(^100g|^1g exact|reference|─+)/i.test(labels[x.i])
+    && /(serving|container|sandwich|wrap|bar|bottle|can|pack|pouch|scoop|slice|piece|cup|bowl|meal)/i.test(labels[x.i])
+  );
+  if (namedUsda) return namedUsda.i;
+
+  // Priority 2: Any non-reference option that came from USDA portions
+  const anyNamed = valid.find(x => !/(reference|─+|^100g|^1g exact)/i.test(labels[x.i]));
+  if (anyNamed) return anyNamed.i;
+
+  // Fallback: first valid
+  return valid[0].i;
 }
 
+// ── Unit normalizer — handles USDA codes like GRM, OZ, LB, ML, etc ──────────
+function normalizeToGrams(value, unit) {
+  const v = Number(value);
+  if (!v || isNaN(v)) return null;
+  const u = String(unit || '').toLowerCase().trim();
+  // Gram variants (USDA uses "GRM", "g", "gram", "grams")
+  if (/^(g|gr|grm|gram|grams)$/.test(u)) return v;
+  // Millilitre variants — treat 1ml ≈ 1g (water-density approximation)
+  if (/^(ml|mls|milliliter|millilitre|milliliters|millilitres)$/.test(u)) return v;
+  // Fluid ounce
+  if (/^(fl\.?\s*oz|floz|fluid.?ounce)/.test(u)) return v * 29.5735;
+  // Ounce
+  if (/^(oz|ounce|ounces)$/.test(u)) return v * 28.3495;
+  // Pound
+  if (/^(lb|lbs|pound|pounds)$/.test(u)) return v * 453.592;
+  // Kilogram
+  if (/^(kg|kilogram|kilograms)$/.test(u)) return v * 1000;
+  // Litre
+  if (/^(l|liter|litre|liters|litres)$/.test(u)) return v * 1000;
+  // Cup
+  if (/^(cup|cups)$/.test(u)) return v * 240;
+  // Tablespoon
+  if (/^(tbsp|tablespoon|tablespoons)$/.test(u)) return v * 14.787;
+  // Teaspoon
+  if (/^(tsp|teaspoon|teaspoons)$/.test(u)) return v * 4.929;
+  // Unknown — if value looks reasonable as grams (< 2000), trust it; else null
+  if (v <= 2000) return v;
+  return null;
+}
+
+// ── Human-readable unit label ─────────────────────────────────────────────────
+function displayUnit(unit) {
+  const u = String(unit || '').toLowerCase().trim();
+  if (/^(g|gr|grm|gram|grams)$/.test(u)) return 'g';
+  if (/^(ml|mls|milliliter|millilitre|milliliters|millilitres)$/.test(u)) return 'ml';
+  if (/^(fl\.?\s*oz|floz|fluid.?ounce)/.test(u)) return 'fl oz';
+  if (/^(oz|ounce|ounces)$/.test(u)) return 'oz';
+  if (/^(lb|lbs|pound|pounds)$/.test(u)) return 'lb';
+  if (/^(kg|kilogram|kilograms)$/.test(u)) return 'kg';
+  if (/^(l|liter|litre|liters|litres)$/.test(u)) return 'L';
+  if (/^(cup|cups)$/.test(u)) return 'cup';
+  if (/^(tbsp|tablespoon|tablespoons)$/.test(u)) return 'tbsp';
+  if (/^(tsp|teaspoon|teaspoons)$/.test(u)) return 'tsp';
+  return unit || 'g';
+}
+
+// ── Extract serving options from USDA full detail ────────────────────────────
+function extractServingOptionsFromUSDADetail(detail) {
+  const portions = detail.foodPortions || [];
+  const labelPortions = detail.labelNutrients ? [] : [];
+  const seen = new Set();
+  const named = [];
+
+  portions.forEach(p => {
+    const grams = Number(p.gramWeight);
+    if (!grams || grams <= 0) return;
+
+    // Build description from multiple possible fields
+    const amt = p.amount != null ? p.amount : 1;
+    let desc = (p.portionDescription || p.modifier || p.measureUnit?.name || '').trim();
+    if (!desc) return;
+
+    // Clean up common USDA verbosity
+    desc = desc
+      .replace(/^quantity of\s+/i, '')
+      .replace(/^1\s+quantity of\s+/i, '1 ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const label = `${amt} ${desc} (${Math.round(grams)}g)`;
+    const dedupKey = `${Math.round(grams)}`;
+    if (seen.has(dedupKey)) return;
+    seen.add(dedupKey);
+    named.push({ label, grams, _isRef: false });
+  });
+
+  // Also try top-level servingSize on detail object
+  if (!named.length && detail.servingSize && detail.servingSizeUnit) {
+    const g = normalizeToGrams(detail.servingSize, detail.servingSizeUnit);
+    if (g && g > 0 && g < 5000) named.push({ label: `1 serving (${Math.round(g)}g)`, grams: g, _isRef: false });
+  }
+
+  return named;
+}
+
+// ── Select food from search result ───────────────────────────────────────────
 async function selectFood(food) {
   hideResults();
   $('foodSearch').value = food.description;
   $('foodName').value = food.description;
 
-  // OFF foods don't have fdcId — use search data directly
-  if(food._source === 'off' || !food.fdcId) {
-    buildSelectedFoodFromSearch(food);
+  if (food._source === 'off' || !food.fdcId) {
+    buildSelectedFoodModel(food, null);
     return;
   }
 
-  // USDA: fetch full detail for proper serving sizes
+  // Show loading state in serving row
+  $('selectedFoodName').textContent = food.description;
+  $('servingUnit').innerHTML = '<option>Loading…</option>';
+  $('servingRow').style.display = 'block';
+
   try {
     const res = await fetch(`https://api.nal.usda.gov/fdc/v1/food/${food.fdcId}?api_key=${USDA_KEY}`);
+    if (!res.ok) throw new Error('detail fetch failed');
     const detail = await res.json();
-    buildSelectedFood(detail);
-  } catch {
-    buildSelectedFoodFromSearch(food);
+    buildSelectedFoodModel(food, detail);
+  } catch(e) {
+    console.warn('[NourishOS] USDA detail fetch failed for fdcId', food.fdcId, e);
+    buildSelectedFoodModel(food, null);
   }
 }
 
-function buildSelectedFood(detail) {
-  const nutrients = detail.foodNutrients || [];
-  const portions  = detail.foodPortions  || [];
+// ── Unified food model builder ────────────────────────────────────────────────
+function buildSelectedFoodModel(searchFood, usdaDetail) {
+  // Nutrients: prefer detail, fall back to search result
+  const nutrients = (usdaDetail?.foodNutrients || searchFood.foodNutrients || []);
 
-  const namedServings = [];
-  portions.forEach(p => {
-    if (p.gramWeight && p.portionDescription) {
-      const amt = p.amount || 1;
-      let desc = `${amt} ${p.portionDescription}`.replace(/\s+/g, ' ').trim();
-      desc = desc.replace(/^1\s+quantity of\s+/i, '1 ').replace(/^quantity of\s+/i, '');
+  // Named servings: prefer USDA detail portions
+  let namedServings = [];
+  if (usdaDetail) {
+    namedServings = extractServingOptionsFromUSDADetail(usdaDetail);
+  }
+
+  // If USDA detail had no parseable portions, try the search result's servingSize field
+  if (!namedServings.length && searchFood.servingSize) {
+    const g = normalizeToGrams(searchFood.servingSize, searchFood.servingSizeUnit);
+    if (g > 0) {
       namedServings.push({
-        label: `${desc} (${Math.round(p.gramWeight)}g)`,
-        grams: p.gramWeight
+        label: `1 serving (${Math.round(g)}g)`,
+        grams: g,
+        _isRef: false
       });
     }
-  });
+  }
 
   const hasRealServing = namedServings.length > 0;
-  if (!hasRealServing) namedServings.push({ label: '100g reference', grams: 100 });
+
+  // If still nothing, use 100g reference
+  if (!hasRealServing) {
+    namedServings.push({ label: '100g reference', grams: 100, _isRef: true });
+  }
 
   const servingOptions = [
     ...namedServings,
-    { label:'──── Reference weights ────', grams:null, disabled:true },
-    { label:'100g reference', grams:100 },
-    { label:'1g exact weight', grams:1 },
-    { label:'──── Common weights ────', grams:null, disabled:true },
-    { label:'1 oz (28g)', grams:28.3495 },
-    { label:'1 lb (454g)', grams:453.592 },
-    { label:'1 kg (1000g)', grams:1000 },
-    { label:'──── Volume estimates ────', grams:null, disabled:true },
-    { label:'1 ml (~1g)', grams:1.0 },
-    { label:'100 ml (~100g)', grams:100.0 },
-    { label:'1 fl oz (~30g)', grams:29.5735 },
-    { label:'1 cup (~240g)', grams:240.0 },
-    { label:'1 tbsp (~15g)', grams:14.7868 },
-    { label:'1 tsp (~5g)', grams:4.9289 },
-    { label:'──── Generic counts ────', grams:null, disabled:true },
-    { label:'1 scoop (~28g)', grams:28 },
-    { label:'1 slice (~28g)', grams:28 },
-    { label:'1 piece (~100g)', grams:100 },
-    { label:'1 container (~100g)', grams:100 },
+    { label: '──── Reference weights ────', grams: null, disabled: true },
+    { label: '100g', grams: 100, _isRef: true },
+    { label: '1g',   grams: 1,   _isRef: true },
+    { label: '──── Common weights ────', grams: null, disabled: true },
+    { label: '1 oz (28g)', grams: 28.3495 },
+    { label: '1 lb (454g)', grams: 453.592 },
+    { label: '1 kg (1000g)', grams: 1000 },
+    { label: '──── Volume estimates ────', grams: null, disabled: true },
+    { label: '1 ml (~1g)', grams: 1.0 },
+    { label: '100 ml (~100g)', grams: 100.0 },
+    { label: '1 fl oz (~30ml)', grams: 29.5735 },
+    { label: '1 cup (~240ml)', grams: 240.0 },
+    { label: '1 tbsp (~15ml)', grams: 14.7868 },
+    { label: '1 tsp (~5ml)', grams: 4.9289 },
+    { label: '──── Generic counts ────', grams: null, disabled: true },
+    { label: '1 scoop (~28g)', grams: 28 },
+    { label: '1 slice (~28g)', grams: 28 },
+    { label: '1 piece (~100g)', grams: 100 },
+    { label: '1 container (~100g)', grams: 100 },
   ];
 
-  selectedFoodData = { description: detail.description, nutrients, servingOptions };
-  setupServingUI(detail.description, servingOptions, hasRealServing ? '' : 'No serving size was provided for this item, so macros are being estimated from a 100g reference.');
+  selectedFoodData = {
+    description: searchFood.description,
+    nutrients,
+    servingOptions,
+    hasRealServing,
+    fdcId: searchFood.fdcId || null,
+    source: searchFood._source || 'usda'
+  };
+
+  const noteText = hasRealServing
+    ? ''
+    : 'No serving size was found for this item. Macros are shown per 100g reference — adjust manually if needed.';
+
+  setupServingUI(searchFood.description, servingOptions, noteText);
 }
 
-function buildSelectedFoodFromSearch(food) {
-  const nutrients = food.foodNutrients || [];
-  const explicitServing = Number(food.servingSize) || null;
-  const explicitUnit = String(food.servingSizeUnit || '').trim();
-  const hasRealServing = !!explicitServing;
-  const servingLabel = hasRealServing
-    ? `1 serving${explicitUnit ? ` (${explicitServing}${explicitUnit})` : ''}`
-    : '100g reference';
-
-  const servingOptions = [
-    { label: servingLabel, grams: explicitServing || 100 },
-    { label:'100g reference', grams:100 },
-    { label:'1g exact weight', grams:1 },
-    { label:'1 oz (28g)', grams:28.3495 },
-    { label:'1 cup (~240g)', grams:240 },
-    { label:'1 tbsp (~15g)', grams:15 },
-  ];
-
-  selectedFoodData = { description: food.description, nutrients, servingOptions };
-  setupServingUI(food.description, servingOptions, hasRealServing ? '' : 'No serving size was available for this result, so macros are being estimated from a 100g reference.');
-}
-
+// ── Serving UI renderer ───────────────────────────────────────────────────────
 function setServingNote(text) {
   const el = $('servingNote');
   if (!el) return;
-  if (!text) {
-    el.style.display = 'none';
-    el.textContent = '';
-    return;
-  }
+  if (!text) { el.style.display = 'none'; el.textContent = ''; return; }
   el.textContent = text;
   el.style.display = 'block';
 }
 
-function setupServingUI(name, servingOptions, noteText = "") {
+function setupServingUI(name, servingOptions, noteText) {
   $('selectedFoodName').textContent = name;
   const sel = $('servingUnit');
   sel.innerHTML = '';
@@ -1632,18 +1751,16 @@ function setupServingUI(name, servingOptions, noteText = "") {
     const o = document.createElement('option');
     o.value = i;
     o.textContent = opt.label;
-    if (opt.disabled) {
-      o.disabled = true;
-      o.style.cssText = 'color:var(--color-text-muted);font-size:.75rem;';
-    }
+    if (opt.disabled) { o.disabled = true; o.style.color = 'var(--color-text-muted)'; }
     sel.appendChild(o);
   });
   sel.value = String(pickBestServingIndex(servingOptions));
   $('servingQty').value = 1;
   $('servingRow').style.display = 'block';
-  setServingNote(noteText);
+  setServingNote(noteText || '');
   updateMacroPreview();
 }
+
 
 function updateMacroPreview() {
   if(!selectedFoodData) return;
@@ -1811,9 +1928,18 @@ function renderSummary() {
 }
 
 function setMetric(name, total, target, suffix) {
-  $(name+'Value').textContent = `${round(total)} / ${round(target)}${suffix}`;
-  const pct = target > 0 ? Math.min(100, (total/target)*100) : 0;
-  $(name+'Progress').style.width = `${pct}%`;
+  const valEl  = $(name+'Value');
+  const barEl  = $(name+'Progress');
+  if (valEl) valEl.textContent = `${round(total)} / ${round(target)}${suffix}`;
+  if (!barEl) return;
+  const pct = target > 0 ? Math.min(100, (total / target) * 100) : 0;
+  // Enforce a minimum sliver when any food has been logged so bar is always visible
+  const displayPct = (total > 0 && pct < 2) ? 2 : pct;
+  barEl.style.width = `${displayPct}%`;
+  // Force background colour inline so dark-mode theme-variable gaps don't hide the bar
+  const colorMap = { calories:'var(--color-primary)', protein:'var(--color-success, #27ae60)', carbs:'#c68b26', fat:'var(--color-warning, #e67e22)' };
+  if (colorMap[name]) barEl.style.background = colorMap[name];
+  if (barEl.getAttribute('aria-valuenow') !== undefined) barEl.setAttribute('aria-valuenow', Math.round(pct));
 }
 
 function renderHistory() {
