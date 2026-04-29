@@ -522,12 +522,22 @@ details#suggestionsDock summary::-webkit-details-marker{display:none;}
         </div>
 
         <!-- selected food + serving -->
-        <div id="servingRow" class="serving-row" style="display:none;margin-top:var(--space-3);">
-          <span class="selected-food-name" id="selectedFoodName">Food</span>
-          <label for="servingQty" style="margin:0;">Qty</label>
-          <input id="servingQty" type="number" min="0.1" step="0.1" value="1" style="max-width:70px;padding:.5rem .6rem;">
-          <select id="servingUnit" style="max-width:180px;padding:.5rem .6rem;"></select>
-          <button class="btn btn-ghost" id="clearFood" type="button" title="Clear selection" style="min-height:40px;padding:.5rem .7rem;">✕</button>
+        <div id="servingRow" style="display:none;margin-top:var(--space-3);padding:var(--space-3);border-radius:var(--radius-md);background:var(--color-surface-2);border:1px solid var(--color-border);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-2);">
+            <span class="selected-food-name" id="selectedFoodName" style="font-weight:600;font-size:var(--text-sm);flex:1;padding-right:.5rem;">Food</span>
+            <button class="btn btn-ghost" id="clearFood" type="button" title="Clear selection" style="min-height:32px;padding:.3rem .6rem;font-size:.85rem;flex-shrink:0;">✕</button>
+          </div>
+          <div style="display:flex;gap:var(--space-2);align-items:center;">
+            <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;">
+              <label for="servingQty" style="font-size:var(--text-xs);color:var(--color-text-muted);margin:0;">Qty</label>
+              <input id="servingQty" type="number" min="0.1" step="0.1" value="1" style="width:64px;padding:.45rem .5rem;font-size:var(--text-sm);">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;">
+              <label for="servingUnit" style="font-size:var(--text-xs);color:var(--color-text-muted);margin:0;">Serving size</label>
+              <select id="servingUnit" style="width:100%;padding:.45rem .5rem;font-size:var(--text-sm);"></select>
+            </div>
+          </div>
+          <div id="servingNote" style="display:none;margin-top:.45rem;font-size:var(--text-xs);line-height:1.45;color:var(--color-text-muted);"></div>
         </div>
 
         <!-- macro preview -->
@@ -1274,6 +1284,7 @@ bindClick('clearFood', () => {
   $('macroPreview').style.display = 'none';
   $('foodSearch').value = '';
   $('foodName').value = '';
+  setServingNote('');
   clearMacroFields();
 });
 
@@ -1500,6 +1511,17 @@ function renderResults(foods, source) {
   });
 }
 
+function pickBestServingIndex(servingOptions) {
+  if (!Array.isArray(servingOptions) || !servingOptions.length) return 0;
+  const labels = servingOptions.map(o => String(o?.label || '').toLowerCase());
+  const valid = servingOptions.map((o, i) => ({ o, i })).filter(x => x.o && !x.o.disabled && Number(x.o.grams) > 0);
+  const servingLike = valid.find(x => /(serving|container|package|pack|bottle|can|bar|piece|slice|cup|wrap|sandwich)/.test(labels[x.i]) && !/^100g/.test(labels[x.i]) && !/^1g/.test(labels[x.i]));
+  if (servingLike) return servingLike.i;
+  const non100g = valid.find(x => !/^100g/.test(labels[x.i]));
+  if (non100g) return non100g.i;
+  return valid[0]?.i || 0;
+}
+
 async function selectFood(food) {
   hideResults();
   $('foodSearch').value = food.description;
@@ -1523,95 +1545,103 @@ async function selectFood(food) {
 
 function buildSelectedFood(detail) {
   const nutrients = detail.foodNutrients || [];
-  const portions = detail.foodPortions || [];
+  const portions  = detail.foodPortions  || [];
 
-  // Always include 100g and 1g as base options
-  const servingOptions = [
-    { label:'100g', grams:100 },
-    { label:'1g', grams:1 },
-  ];
+  const namedServings = [];
   portions.forEach(p => {
-    if(p.gramWeight && p.portionDescription) {
-      servingOptions.push({ label:`${p.amount||1} ${p.portionDescription} (${Math.round(p.gramWeight)}g)`, grams:p.gramWeight });
+    if (p.gramWeight && p.portionDescription) {
+      const amt = p.amount || 1;
+      let desc = `${amt} ${p.portionDescription}`.replace(/\s+/g, ' ').trim();
+      desc = desc.replace(/^1\s+quantity of\s+/i, '1 ').replace(/^quantity of\s+/i, '');
+      namedServings.push({
+        label: `${desc} (${Math.round(p.gramWeight)}g)`,
+        grams: p.gramWeight
+      });
     }
   });
 
-  // Universal units — weight
-  servingOptions.push(
-    { label:'─── Weight ───', grams:null, disabled:true },
+  const hasRealServing = namedServings.length > 0;
+  if (!hasRealServing) namedServings.push({ label: '100g reference', grams: 100 });
+
+  const servingOptions = [
+    ...namedServings,
+    { label:'──── Reference weights ────', grams:null, disabled:true },
+    { label:'100g reference', grams:100 },
+    { label:'1g exact weight', grams:1 },
+    { label:'──── Common weights ────', grams:null, disabled:true },
     { label:'1 oz (28g)', grams:28.3495 },
     { label:'1 lb (454g)', grams:453.592 },
-    { label:'1 kg', grams:1000 },
-  );
-  // Volume
-  servingOptions.push(
-    { label:'─── Volume ───', grams:null, disabled:true },
-    { label:'1 ml', grams:1.0 },
-    { label:'100 ml', grams:100.0 },
-    { label:'1 fl oz (30ml)', grams:29.5735 },
-    { label:'1 cup (240ml)', grams:240.0 },
-    { label:'1 tbsp (15ml)', grams:14.7868 },
-    { label:'1 tsp (5ml)', grams:4.9289 },
-  );
-  // Count & serving
-  servingOptions.push(
-    { label:'─── Count / Serving ───', grams:null, disabled:true },
-    { label:'1 serving', grams:100 },
-    { label:'1 scoop', grams:100 },
-    { label:'1 slice', grams:100 },
-    { label:'1 piece', grams:100 },
-    { label:'1 container', grams:100 },
-  );
+    { label:'1 kg (1000g)', grams:1000 },
+    { label:'──── Volume estimates ────', grams:null, disabled:true },
+    { label:'1 ml (~1g)', grams:1.0 },
+    { label:'100 ml (~100g)', grams:100.0 },
+    { label:'1 fl oz (~30g)', grams:29.5735 },
+    { label:'1 cup (~240g)', grams:240.0 },
+    { label:'1 tbsp (~15g)', grams:14.7868 },
+    { label:'1 tsp (~5g)', grams:4.9289 },
+    { label:'──── Generic counts ────', grams:null, disabled:true },
+    { label:'1 scoop (~28g)', grams:28 },
+    { label:'1 slice (~28g)', grams:28 },
+    { label:'1 piece (~100g)', grams:100 },
+    { label:'1 container (~100g)', grams:100 },
+  ];
 
   selectedFoodData = { description: detail.description, nutrients, servingOptions };
-  setupServingUI(detail.description, servingOptions);
+  setupServingUI(detail.description, servingOptions, hasRealServing ? '' : 'No serving size was provided for this item, so macros are being estimated from a 100g reference.');
 }
 
 function buildSelectedFoodFromSearch(food) {
+  const nutrients = food.foodNutrients || [];
+  const explicitServing = Number(food.servingSize) || null;
+  const explicitUnit = String(food.servingSizeUnit || '').trim();
+  const hasRealServing = !!explicitServing;
+  const servingLabel = hasRealServing
+    ? `1 serving${explicitUnit ? ` (${explicitServing}${explicitUnit})` : ''}`
+    : '100g reference';
+
   const servingOptions = [
-    { label:'100g', grams:100 },
-    { label:'1g', grams:1 },
-  ];
-  if(food.servingSize && food.servingSizeUnit) {
-    const g = food.servingSizeUnit.toLowerCase() === 'g' ? food.servingSize : food.servingSize * 28.35;
-    servingOptions.push({ label:`1 serving (${Math.round(g)}g)`, grams:g });
-  }
-  servingOptions.push(
-    { label:'─── Weight ───', grams:null, disabled:true },
+    { label: servingLabel, grams: explicitServing || 100 },
+    { label:'100g reference', grams:100 },
+    { label:'1g exact weight', grams:1 },
     { label:'1 oz (28g)', grams:28.3495 },
-    { label:'1 lb (454g)', grams:453.592 },
-    { label:'1 kg', grams:1000 },
-    { label:'─── Volume ───', grams:null, disabled:true },
-    { label:'1 ml', grams:1.0 },
-    { label:'100 ml', grams:100.0 },
-    { label:'1 fl oz (30ml)', grams:29.5735 },
-    { label:'1 cup (240ml)', grams:240.0 },
-    { label:'1 tbsp (15ml)', grams:14.7868 },
-    { label:'1 tsp (5ml)', grams:4.9289 },
-    { label:'─── Count / Serving ───', grams:null, disabled:true },
-    { label:'1 serving', grams:100 },
-    { label:'1 scoop', grams:100 },
-    { label:'1 slice', grams:100 },
-    { label:'1 piece', grams:100 },
-    { label:'1 container', grams:100 },
-  );
-  selectedFoodData = { description: food.description, nutrients: food.foodNutrients||[], servingOptions };
-  setupServingUI(food.description, servingOptions);
+    { label:'1 cup (~240g)', grams:240 },
+    { label:'1 tbsp (~15g)', grams:15 },
+  ];
+
+  selectedFoodData = { description: food.description, nutrients, servingOptions };
+  setupServingUI(food.description, servingOptions, hasRealServing ? '' : 'No serving size was available for this result, so macros are being estimated from a 100g reference.');
 }
 
-function setupServingUI(name, servingOptions) {
+function setServingNote(text) {
+  const el = $('servingNote');
+  if (!el) return;
+  if (!text) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.textContent = text;
+  el.style.display = 'block';
+}
+
+function setupServingUI(name, servingOptions, noteText = "") {
   $('selectedFoodName').textContent = name;
   const sel = $('servingUnit');
   sel.innerHTML = '';
-  servingOptions.forEach((opt,i) => {
+  servingOptions.forEach((opt, i) => {
     const o = document.createElement('option');
     o.value = i;
     o.textContent = opt.label;
-    if(opt.disabled) { o.disabled = true; o.style.color = 'var(--color-text-faint)'; }
+    if (opt.disabled) {
+      o.disabled = true;
+      o.style.cssText = 'color:var(--color-text-muted);font-size:.75rem;';
+    }
     sel.appendChild(o);
   });
+  sel.value = String(pickBestServingIndex(servingOptions));
   $('servingQty').value = 1;
-  $('servingRow').style.display = 'flex';
+  $('servingRow').style.display = 'block';
+  setServingNote(noteText);
   updateMacroPreview();
 }
 
@@ -1619,7 +1649,8 @@ function updateMacroPreview() {
   if(!selectedFoodData) return;
   const qty = parseFloat($('servingQty').value) || 1;
   const idx = parseInt($('servingUnit').value) || 0;
-  const grams = (selectedFoodData.servingOptions[idx]?.grams || 100) * qty;
+  const baseGrams = Number(selectedFoodData.servingOptions[idx]?.grams) || Number(selectedFoodData.servingOptions[pickBestServingIndex(selectedFoodData.servingOptions)]?.grams) || 100;
+  const grams = baseGrams * qty;
   const scale = grams / 100;
   const nutrients = selectedFoodData.nutrients;
 
