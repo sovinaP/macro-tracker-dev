@@ -1137,12 +1137,119 @@ bindClick('applyWizard', () => {
   }
 })();
 
+
+
+// ── Quick Picks: common everyday branded foods ───────────────────
+const QUICK_PICKS = [
+  {description:'Fairlife Core Power Elite Chocolate', brandOwner:'Fairlife', servingSize:414, servingSizeUnit:'ml', _source:'local', foodNutrients:[{nutrientId:1008,value:230},{nutrientId:1003,value:42},{nutrientId:1005,value:8},{nutrientId:1004,value:3.5},{nutrientId:1079,value:1}]},
+  {description:'Fairlife Nutrition Plan Chocolate', brandOwner:'Fairlife', servingSize:340, servingSizeUnit:'ml', _source:'local', foodNutrients:[{nutrientId:1008,value:150},{nutrientId:1003,value:30},{nutrientId:1005,value:4},{nutrientId:1004,value:2.5},{nutrientId:1079,value:1}]},
+  {description:'Premier Protein Shake Chocolate', brandOwner:'Premier Protein', servingSize:325, servingSizeUnit:'ml', _source:'local', foodNutrients:[{nutrientId:1008,value:160},{nutrientId:1003,value:30},{nutrientId:1005,value:5},{nutrientId:1004,value:3},{nutrientId:1079,value:1}]},
+  {description:'Quest Protein Bar Cookies & Cream', brandOwner:'Quest', servingSize:60, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:190},{nutrientId:1003,value:21},{nutrientId:1005,value:22},{nutrientId:1004,value:8},{nutrientId:1079,value:14}]},
+  {description:'Chobani Non-Fat Greek Yogurt Plain', brandOwner:'Chobani', servingSize:170, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:90},{nutrientId:1003,value:16},{nutrientId:1005,value:6},{nutrientId:1004,value:0},{nutrientId:1079,value:0}]},
+  {description:'Oikos Triple Zero Vanilla Greek Yogurt', brandOwner:'Oikos', servingSize:150, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:90},{nutrientId:1003,value:15},{nutrientId:1005,value:7},{nutrientId:1004,value:0},{nutrientId:1079,value:6}]},
+  {description:'Fage Total 0% Greek Yogurt', brandOwner:'Fage', servingSize:170, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:90},{nutrientId:1003,value:18},{nutrientId:1005,value:5},{nutrientId:1004,value:0},{nutrientId:1079,value:0}]},
+  {description:'Eggland\'s Best Large Egg', brandOwner:'Eggland\'s Best', servingSize:50, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:70},{nutrientId:1003,value:6},{nutrientId:1005,value:0},{nutrientId:1004,value:5},{nutrientId:1079,value:0}]},
+  {description:'Dave\'s Killer Bread Thin-Sliced 21 Whole Grains', brandOwner:'Dave\'s Killer Bread', servingSize:28, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:70},{nutrientId:1003,value:3},{nutrientId:1005,value:13},{nutrientId:1004,value:1},{nutrientId:1079,value:3}]},
+  {description:'Nature Valley Protein Peanut Butter Bar', brandOwner:'Nature Valley', servingSize:40, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:190},{nutrientId:1003,value:10},{nutrientId:1005,value:14},{nutrientId:1004,value:12},{nutrientId:1079,value:2}]},
+  {description:'Kodiak Cakes Buttermilk Power Cakes', brandOwner:'Kodiak', servingSize:53, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:190},{nutrientId:1003,value:14},{nutrientId:1005,value:30},{nutrientId:1004,value:2},{nutrientId:1079,value:5}]},
+  {description:'Quaker Old Fashioned Oats', brandOwner:'Quaker', servingSize:40, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:150},{nutrientId:1003,value:5},{nutrientId:1005,value:27},{nutrientId:1004,value:3},{nutrientId:1079,value:4}]},
+  {description:'PBfit Original Peanut Butter Powder', brandOwner:'PBfit', servingSize:16, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:70},{nutrientId:1003,value:8},{nutrientId:1005,value:5},{nutrientId:1004,value:2},{nutrientId:1079,value:2}]},
+  {description:'Skippy Creamy Peanut Butter', brandOwner:'Skippy', servingSize:32, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:190},{nutrientId:1003,value:7},{nutrientId:1005,value:7},{nutrientId:1004,value:16},{nutrientId:1079,value:2}]},
+  {description:'Jif Creamy Peanut Butter', brandOwner:'Jif', servingSize:32, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:190},{nutrientId:1003,value:7},{nutrientId:1005,value:8},{nutrientId:1004,value:16},{nutrientId:1079,value:2}]},
+  {description:'Minute Ready to Serve White Rice Cup', brandOwner:'Minute', servingSize:125, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:250},{nutrientId:1003,value:5},{nutrientId:1005,value:53},{nutrientId:1004,value:0.5},{nutrientId:1079,value:1}]},
+  {description:'Ben\'s Original Ready Rice Jasmine', brandOwner:'Ben\'s Original', servingSize:220, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:380},{nutrientId:1003,value:8},{nutrientId:1005,value:85},{nutrientId:1004,value:1},{nutrientId:1079,value:2}]},
+  {description:'Mission Carb Balance Tortilla Soft Taco', brandOwner:'Mission', servingSize:43, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:70},{nutrientId:1003,value:5},{nutrientId:1005,value:19},{nutrientId:1004,value:2.5},{nutrientId:1079,value:15}]},
+  {description:'Sargento Reduced Fat Sharp Cheddar Slice', brandOwner:'Sargento', servingSize:21, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:45},{nutrientId:1003,value:6},{nutrientId:1005,value:1},{nutrientId:1004,value:2.5},{nutrientId:1079,value:0}]},
+  {description:'Tyson Grilled & Ready Chicken Breast', brandOwner:'Tyson', servingSize:84, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:110},{nutrientId:1003,value:22},{nutrientId:1005,value:1},{nutrientId:1004,value:2},{nutrientId:1079,value:0}]},
+  {description:'Perdue Short Cuts Carved Chicken Breast', brandOwner:'Perdue', servingSize:84, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:100},{nutrientId:1003,value:20},{nutrientId:1005,value:2},{nutrientId:1004,value:2},{nutrientId:1079,value:0}]},
+  {description:'StarKist Chunk Light Tuna in Water', brandOwner:'StarKist', servingSize:74, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:70},{nutrientId:1003,value:16},{nutrientId:1005,value:0},{nutrientId:1004,value:0.5},{nutrientId:1079,value:0}]},
+  {description:'Rotisserie Chicken Breast Meat', brandOwner:'Generic', servingSize:85, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:140},{nutrientId:1003,value:27},{nutrientId:1005,value:0},{nutrientId:1004,value:3},{nutrientId:1079,value:0}]},
+  {description:'Chick-fil-A Grilled Nuggets', brandOwner:'Chick-fil-A', servingSize:135, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:200},{nutrientId:1003,value:38},{nutrientId:1005,value:2},{nutrientId:1004,value:4.5},{nutrientId:1079,value:0}]},
+  {description:'Chipotle Chicken', brandOwner:'Chipotle', servingSize:120, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:180},{nutrientId:1003,value:32},{nutrientId:1005,value:0},{nutrientId:1004,value:7},{nutrientId:1079,value:0}]},
+  {description:'McDonald\'s Hash Browns', brandOwner:'McDonald\'s', servingSize:56, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:140},{nutrientId:1003,value:2},{nutrientId:1005,value:18},{nutrientId:1004,value:8},{nutrientId:1079,value:2}]},
+  {description:'Panera Mac & Cheese', brandOwner:'Panera', servingSize:240, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:470},{nutrientId:1003,value:17},{nutrientId:1005,value:40},{nutrientId:1004,value:27},{nutrientId:1079,value:2}]},
+  {description:'Celsius Sparkling Orange', brandOwner:'Celsius', servingSize:355, servingSizeUnit:'ml', _source:'local', foodNutrients:[{nutrientId:1008,value:10},{nutrientId:1003,value:0},{nutrientId:1005,value:2},{nutrientId:1004,value:0},{nutrientId:1079,value:0}]},
+  {description:'Gatorade Zero Glacier Freeze', brandOwner:'Gatorade', servingSize:591, servingSizeUnit:'ml', _source:'local', foodNutrients:[{nutrientId:1008,value:0},{nutrientId:1003,value:0},{nutrientId:1005,value:0},{nutrientId:1004,value:0},{nutrientId:1079,value:0}]},
+  {description:'Liquid I.V. Hydration Multiplier Lemon Lime', brandOwner:'Liquid I.V.', servingSize:16, servingSizeUnit:'g', _source:'local', foodNutrients:[{nutrientId:1008,value:45},{nutrientId:1003,value:0},{nutrientId:1005,value:11},{nutrientId:1004,value:0},{nutrientId:1079,value:0}]}
+];
+
+function searchQuickPicks(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q || q.length < 2) return [];
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const scored = QUICK_PICKS.map(item => {
+    const hay = `${item.brandOwner} ${item.description}`.toLowerCase();
+    let score = 0;
+    if (hay.startsWith(q)) score += 100;
+    if (item.brandOwner.toLowerCase().startsWith(q)) score += 85;
+    if (item.description.toLowerCase().startsWith(q)) score += 75;
+    if (hay.includes(q)) score += 45;
+    tokens.forEach(t => { if (hay.includes(t)) score += 12; });
+    return { item, score };
+  }).filter(x => x.score > 0)
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 8)
+    .map(x => x.item);
+  return scored;
+}
+
+async function dualSearch(query) {
+  const q = (query || '').trim();
+  if (!q) return;
+  showResultsLoading();
+  const seen = new Set();
+  const merged = [];
+  const add = (food) => {
+    const key = `${(food.brandOwner||'').toLowerCase()}|${(food.description||'').toLowerCase()}`;
+    if (!seen.has(key)) { seen.add(key); merged.push(food); }
+  };
+
+  // 1) Quick branded picks first
+  searchQuickPicks(q).forEach(add);
+
+  // 2) USDA branded/general
+  try {
+    const res = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${USDA_KEY}&query=${encodeURIComponent(q)}&dataType=Branded,Foundation,SR%20Legacy&pageSize=12`);
+    if (res.ok) {
+      const data = await res.json();
+      (data.foods || []).forEach(f => add({ ...f, _source:'usda' }));
+    }
+  } catch(e) {}
+
+  // 3) Open Food Facts fallback for more real-world branded items
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(q)}&page_size=12&fields=product_name,brands,nutriments,serving_size,serving_quantity&json=true`, {mode:'cors'});
+    if (res.ok) {
+      const data = await res.json();
+      (data.products || []).filter(p => p.product_name).forEach(p => {
+        const n = p.nutriments || {};
+        add({
+          description: p.product_name,
+          brandOwner: p.brands || '',
+          servingSize: p.serving_quantity || null,
+          servingSizeUnit: 'g',
+          _source: 'off',
+          foodNutrients: [
+            { nutrientId:1008, value: Math.round(n['energy-kcal_100g'] || (n['energy_100g'] ? n['energy_100g']/4.184 : 0)) },
+            { nutrientId:1003, value: n['proteins_100g'] || 0 },
+            { nutrientId:1005, value: n['carbohydrates_100g'] || 0 },
+            { nutrientId:1004, value: n['fat_100g'] || 0 },
+            { nutrientId:1079, value: n['fiber_100g'] || 0 },
+          ]
+        });
+      });
+    }
+  } catch(e) {}
+
+  renderResults(merged.slice(0, 14), 'mixed');
+}
+
 // food search
 bindInput('foodSearch', () => {
   clearTimeout(searchDebounce);
   const q = $('foodSearch').value.trim();
   if(q.length < 2){ hideResults(); return; }
-  searchDebounce = setTimeout(() => searchUSDA(q), 500);
+  searchDebounce = setTimeout(() => dualSearch(q), 350);
 });
 
 ;
@@ -1367,7 +1474,13 @@ function renderResults(foods, source) {
   if(!foods.length){ box.innerHTML = '<div class="search-hint">No results found. Try a different name or switch databases.</div>'; box.style.display='block'; return; }
   box.innerHTML = '';
   box.style.display = 'block';
-  const srcLabel = source === 'off' ? '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">Open Food Facts</span>' : '';
+  const badgeFor = (food) => {
+    const s = food._source || source;
+    if (s === 'local') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:color-mix(in oklab,var(--color-primary) 10%,var(--color-surface-offset));color:var(--color-primary);margin-left:.4rem;">Quick Pick</span>';
+    if (s === 'off') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">Open Food Facts</span>';
+    if (s === 'usda') return '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">USDA</span>';
+    return '';
+  };
   foods.forEach(food => {
     const item = document.createElement('div');
     item.className = 'search-result-item';
@@ -1379,7 +1492,7 @@ function renderResults(foods, source) {
     const serving = food.servingSize ? ` · ${food.servingSize}${food.servingSizeUnit||'g'} serving` : '';
     const brand = food.brandOwner || (source === 'off' ? 'Open Food Facts' : food.dataType || '');
     item.innerHTML = `
-      <div class="sri-name">${escHtml(food.description)}${srcLabel}</div>
+      <div class="sri-name">${escHtml(food.description)}${badgeFor(food)}</div>
       <div class="sri-meta">${escHtml(brand)}${serving}</div>
       <div class="sri-macros">${cal} kcal · P ${pro}g · C ${carb}g · F ${fat}g per 100g</div>`;
     item.addEventListener('click', () => selectFood(food));
@@ -2368,66 +2481,361 @@ if(document.readyState === 'loading') document.addEventListener('DOMContentLoade
 
 <script>
 // ── Smart recommendations ──────────────────────────────────────
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SMART SUGGESTIONS — full pipeline refactor
+// Pipeline: analyzeSuggestionContext → planSuggestions → selectSuggestionCandidate
+//           → translateSuggestion → renderSuggestionCards
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── 1. Context builder ──────────────────────────────────────────────────────
+function getCurrentMealBucket() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Breakfast';
+  if (h < 16) return 'Lunch';
+  if (h < 21) return 'Dinner';
+  return 'Snack';
+}
+
+function analyzeSuggestionContext(date) {
+  const totals = getTotals(date);
+  const t = state.settings.targets || {};
+  const remaining = {
+    calories: Math.max(0, (t.calories||0) - totals.calories),
+    protein:  Math.max(0, (t.protein||0)  - totals.protein),
+    carbs:    Math.max(0, (t.carbs||0)    - totals.carbs),
+    fat:      Math.max(0, (t.fat||0)      - totals.fat),
+    fiber:    Math.max(0, (t.fiber||0)    - totals.fiber)
+  };
+  const over = {
+    calories: totals.calories > (t.calories||0),
+    protein:  totals.protein  > (t.protein||0),
+    carbs:    totals.carbs    > (t.carbs||0),
+    fat:      totals.fat      > (t.fat||0)
+  };
+  const todayFoodKeys = new Set(
+    ((state.entries||{})[date]||[]).map(e => String(e.name||'').trim().toLowerCase()).filter(Boolean)
+  );
+  return { date, targets: t, totals, remaining, over, mealHint: getCurrentMealBucket(), todayFoodKeys };
+}
+
+// ── 2. History profiler ─────────────────────────────────────────────────────
+function buildHistoryPool(ctx) {
+  const counts = new Map();
+  const pool = [];
+  Object.entries(state.entries || {}).forEach(([date, list]) => {
+    if (date === ctx.date) return;
+    const daysAgo = Math.max(0, Math.round(
+      (new Date(ctx.date + 'T00:00:00') - new Date(date + 'T00:00:00')) / 86400000
+    ));
+    (list || []).forEach(entry => {
+      const name = String(entry.name || '').trim();
+      if (!name || !Number(entry.calories)) return;
+      const key = name.toLowerCase();
+      counts.set(key, (counts.get(key) || 0) + 1);
+      pool.push({
+        key, name,
+        meal:     entry.meal || '',
+        calories: Number(entry.calories) || 0,
+        protein:  Number(entry.protein)  || 0,
+        carbs:    Number(entry.carbs)    || 0,
+        fat:      Number(entry.fat)      || 0,
+        fiber:    Number(entry.fiber)    || 0,
+        daysAgo,
+        eatenToday: ctx.todayFoodKeys.has(key),
+        count: 0
+      });
+    });
+  });
+  pool.forEach(i => i.count = counts.get(i.key) || 1);
+  return pool;
+}
+
+// ── 3. Candidate selector ───────────────────────────────────────────────────
+function selectSuggestionCandidate(ctx, mode) {
+  const pool = buildHistoryPool(ctx);
+  if (!pool.length) return null;
+  const { remaining: rem, over, mealHint } = ctx;
+
+  const scored = pool.map(item => {
+    let score = 0;
+    // recency: items from last 14 days get a proportional bonus
+    const recencyBonus = Math.max(0, 14 - Math.min(item.daysAgo, 14)) * 2.5;
+    score += recencyBonus;
+    // frequency
+    score += Math.min(item.count, 20) * 11;
+    // meal-time match
+    if (item.meal && item.meal === mealHint) score += 30;
+    // penalise foods already eaten today (less in hold/topoff mode)
+    if (item.eatenToday) score -= (mode === 'hold' ? 10 : 30);
+
+    if (mode === 'add' || mode === 'topoff') {
+      // favour foods that hit the biggest macro gap
+      const protEfficiency = item.protein / Math.max(item.calories, 1) * 100;
+      const carbEfficiency  = item.carbs   / Math.max(item.calories, 1) * 100;
+      if (rem.protein > rem.carbs && rem.protein > 20) score += protEfficiency * 3.5;
+      else if (rem.carbs > rem.protein && rem.carbs > 30) score += carbEfficiency * 2.8;
+      // penalise foods that would blow remaining calories
+      if (item.calories > rem.calories + 150) score -= 45;
+      // penalise high-fat if fat is over
+      if (over.fat) score -= item.fat * 3.5;
+    }
+
+    if (mode === 'protein') {
+      score += item.protein * 4.5;
+      score -= item.fat * 2;
+      if (item.fat / Math.max(item.protein, 1) < 0.6) score += 20;
+      if (item.calories > rem.calories + 100) score -= 40;
+    }
+
+    if (mode === 'carbs') {
+      score += item.carbs * 3.5;
+      score -= item.fat * 2;
+      if (item.fat <= 8) score += 14;
+      if (item.calories > rem.calories + 150) score -= 40;
+    }
+
+    if (mode === 'lighter' || mode === 'swap') {
+      score -= item.calories * 0.18;
+      score -= item.fat * 2.5;
+      if (item.calories <= Math.max(rem.calories, 80) + 80) score += 22;
+      if (item.protein > 15) score += 14; // lean protein bonus
+    }
+
+    if (mode === 'avoid') score = 0; // no pick needed
+
+    if (mode === 'hold') {
+      score += item.count * 6;
+      score -= Math.abs(item.calories - rem.calories) * 0.02;
+    }
+
+    return { ...item, score };
+  }).filter(i => i.calories > 0 && i.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0] || null;
+}
+
+// ── 4. Planner — resolves conflicts and decides which cards to show ──────────
+function planSuggestions(ctx) {
+  const { remaining: rem, over, targets: t } = ctx;
+  const hasTargets = t && t.calories;
+  if (!hasTargets) return [{ strategy: 'setup', icon: '⚙️', tone: 'neutral' }];
+
+  const cards = [];
+
+  // --- Calorie situation (always first) ---
+  if (over.calories) {
+    cards.push({ strategy: 'avoid', macro: 'calories', icon: '🚫', tone: 'warning' });
+  } else if (rem.calories < 150 && rem.calories > 0) {
+    cards.push({ strategy: 'topoff', macro: 'calories', icon: '✅', tone: 'positive' });
+  } else if (rem.calories > 600) {
+    cards.push({ strategy: 'add', macro: 'calories', icon: '📈', tone: 'info' });
+  }
+
+  // --- Protein (only add if calories allow; swap if tight) ---
+  if (over.protein) {
+    cards.push({ strategy: 'avoid', macro: 'protein', icon: '⚠️', tone: 'warning' });
+  } else if (rem.protein > 25) {
+    const mode = (rem.calories < rem.protein * 4 + 50) ? 'swap' : 'protein';
+    cards.push({ strategy: mode, macro: 'protein', icon: '💪', tone: 'action' });
+  }
+
+  // --- Fat ---
+  if (over.fat) {
+    cards.push({ strategy: 'lighter', macro: 'fat', icon: '⚠️', tone: 'warning' });
+  }
+
+  // --- Carbs ---
+  if (over.carbs) {
+    cards.push({ strategy: 'avoid', macro: 'carbs', icon: '⚠️', tone: 'warning' });
+  } else if (rem.carbs > 40 && !over.calories) {
+    cards.push({ strategy: 'carbs', macro: 'carbs', icon: '🍚', tone: 'info' });
+  }
+
+  // --- All on track ---
+  if (cards.length === 0) {
+    cards.push({ strategy: 'hold', macro: null, icon: '🎯', tone: 'positive' });
+  }
+
+  // attach candidate to each card that needs one
+  const needsCandidate = ['add', 'topoff', 'protein', 'carbs', 'swap', 'lighter', 'hold'];
+  cards.forEach(card => {
+    if (needsCandidate.includes(card.strategy)) {
+      card.candidate = selectSuggestionCandidate(ctx, card.strategy);
+    }
+  });
+
+  return cards.slice(0, 4); // cap at 4 cards
+}
+
+// ── 5. Translation layer ─────────────────────────────────────────────────────
+function derivePrimaryReason(ctx, card) {
+  const { remaining: rem, over, totals, targets: t } = ctx;
+  switch (card.macro) {
+    case 'calories':
+      if (over.calories) return `You are ${Math.round(totals.calories - t.calories)} kcal over for the day`;
+      if (rem.calories < 150) return `Only ${Math.round(rem.calories)} kcal left`;
+      return `${Math.round(rem.calories)} kcal still remaining`;
+    case 'protein':
+      if (over.protein) return `Protein is ${Math.round(totals.protein - t.protein)}g over target`;
+      return `${Math.round(rem.protein)}g of protein still needed`;
+    case 'carbs':
+      if (over.carbs) return `Carbs are ${Math.round(totals.carbs - t.carbs)}g over target`;
+      return `${Math.round(rem.carbs)}g of carbs still remaining`;
+    case 'fat':
+      return `Fat is ${Math.round(totals.fat - t.fat)}g over target`;
+    default: return null;
+  }
+}
+
+function deriveConstraint(ctx, card) {
+  const { over, remaining: rem } = ctx;
+  if (card.strategy === 'protein' && over.fat)
+    return 'keep it lean — fat is already over';
+  if (card.strategy === 'protein' && rem.calories < 300)
+    return 'calories are getting tight so pick something efficient';
+  if (card.strategy === 'swap')
+    return 'you do not have much calorie room left, so swap rather than add';
+  if (card.strategy === 'carbs' && over.fat)
+    return 'stick to low-fat carb sources';
+  if (card.strategy === 'lighter' || card.strategy === 'avoid')
+    return 'avoid calorie-dense extras for the rest of the day';
+  return null;
+}
+
+function translateSuggestion(ctx, card) {
+  const { strategy, macro, icon, tone, candidate } = card;
+  const reason = derivePrimaryReason(ctx, card);
+  const constraint = deriveConstraint(ctx, card);
+  const mealLabel = ctx.mealHint.toLowerCase();
+  const recentLabel = (candidate && candidate.daysAgo <= 7) ? 'you have been logging recently' : 'you tend to log';
+
+  let title = '';
+  let body  = '';
+
+  if (strategy === 'setup') {
+    return { icon: '⚙️', title: 'Set up your targets', body: 'Open the Goal Wizard to set daily targets and unlock smart suggestions.', tone: 'neutral' };
+  }
+
+  if (strategy === 'hold') {
+    title = 'On track';
+    if (candidate) {
+      body = `You are right on track for today. Keep the next meal consistent with what ${recentLabel}, like ${candidate.name}, rather than forcing anything new.`;
+    } else {
+      body = 'You are right on track. Keep the next meal similar to what you have been doing all day.';
+    }
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'avoid') {
+    title = macro === 'calories' ? 'Over calories' :
+            macro === 'protein'  ? 'Over protein'  :
+            macro === 'carbs'    ? 'Over carbs'     : 'Over fat';
+    body = `${reason}. Keep the rest of the day lighter and avoid adding more ${macro === 'calories' ? 'calorie-dense' : macro + '-heavy'} foods.`;
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'lighter') {
+    title = 'Keep the next meal lean';
+    body = `${reason}. ${constraint ? constraint.charAt(0).toUpperCase() + constraint.slice(1) + '.' : ''}`;
+    if (candidate) body += ` Something lighter like ${candidate.name} for ${mealLabel} fits better than a heavy option.`;
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'topoff') {
+    title = 'Almost there';
+    if (candidate) {
+      body = `${reason}. Something similar to ${candidate.name} that ${recentLabel} for ${mealLabel} should close it cleanly${constraint ? ' — ' + constraint : ''}.`;
+    } else {
+      body = `${reason}. A small snack or light side will finish the day cleanly.`;
+    }
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'add') {
+    title = 'Room for a meal';
+    body = `${reason}. Focus on the biggest macro gap rather than just filling calories.`;
+    if (candidate) body += ` Based on what ${recentLabel}, something like ${candidate.name} for ${mealLabel} is a practical fit.`;
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'protein') {
+    title = 'Protein gap';
+    if (candidate) {
+      body = `${reason}. Based on what ${recentLabel}, ${candidate.name} for ${mealLabel} hits protein well${constraint ? ' — ' + constraint : ''}.`;
+    } else {
+      body = `${reason}. Add a high-protein food you already log consistently${constraint ? ' — ' + constraint : ''}.`;
+    }
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'swap') {
+    title = 'Swap for protein';
+    if (candidate) {
+      body = `${reason} but ${constraint}. Swap a heavier item for something lean like ${candidate.name} instead of adding on top.`;
+    } else {
+      body = `${reason} but ${constraint}. Replace a calorie-heavy item with a lean protein source rather than eating more.`;
+    }
+    return { icon, title, body, tone };
+  }
+
+  if (strategy === 'carbs') {
+    title = 'Carb gap';
+    if (candidate) {
+      body = `${reason}. Based on your usual foods, ${candidate.name} for ${mealLabel} is a better match than a random carb source${constraint ? ' — ' + constraint : ''}.`;
+    } else {
+      body = `${reason}. Use a carb source you already log consistently${constraint ? ' — ' + constraint : ''}.`;
+    }
+    return { icon, title, body, tone };
+  }
+
+  // fallback
+  return { icon: icon || '💡', title: 'Suggestion', body: reason || 'Keep your next meal balanced.', tone: tone || 'neutral' };
+}
+
+// ── 6. Renderer ──────────────────────────────────────────────────────────────
+const TONE_COLORS = {
+  positive: 'var(--color-success, #27ae60)',
+  warning:  'var(--color-warning-text, #e67e22)',
+  action:   '#9b59b6',
+  info:     'var(--color-primary)',
+  neutral:  'var(--color-text-muted)'
+};
+
+function renderSuggestionCards(cards) {
+  const panel = document.getElementById('recoContent');
+  if (!panel) return;
+  panel.innerHTML = cards.map(card => {
+    const color = TONE_COLORS[card.tone] || TONE_COLORS.neutral;
+    const titleHtml = card.title
+      ? `<div style="font-weight:600;font-size:var(--text-sm);color:${color};margin-bottom:.2rem;">${card.icon} ${card.title}</div>`
+      : '';
+    const bodyHtml = `<div style="font-size:var(--text-sm);line-height:1.55;color:var(--color-text);">${card.body}</div>`;
+    return `<div style="padding:.65rem .8rem;border-radius:var(--radius-md);background:var(--color-surface-2);border-left:3px solid ${color};">
+      ${titleHtml}${bodyHtml}
+    </div>`;
+  }).join('');
+}
+
+// ── 7. Entry point ────────────────────────────────────────────────────────────
 function buildRecos() {
   const panel = document.getElementById('recoContent');
   if (!panel) return;
   const date = document.getElementById('datePicker')?.value || todayStr;
-  const totals = getTotals(date);
   const t = state.settings.targets;
-  if (!t || !t.calories) { panel.innerHTML = '<p class="muted">Set your targets in the Goal Wizard to see suggestions.</p>'; return; }
-
-  const remCal  = Math.max(0, t.calories - totals.calories);
-  const remProt = Math.max(0, t.protein  - totals.protein);
-  const remCarb = Math.max(0, t.carbs    - totals.carbs);
-  const remFat  = Math.max(0, t.fat      - totals.fat);
-
-  const overProt = totals.protein > t.protein;
-  const overCarb = totals.carbs   > t.carbs;
-  const overFat  = totals.fat     > t.fat;
-  const overCal  = totals.calories > t.calories;
-
-  const items = [];
-
-  if (overCal) {
-    items.push({ icon:'🚫', color:'#e74c3c', msg:`You're ${Math.round(totals.calories - t.calories)} kcal over for the day. Skip heavy sides or sauces for your next meal.` });
-  } else if (remCal < 200 && remCal > 0) {
-    items.push({ icon:'✅', color:'#27ae60', msg:`Only ${Math.round(remCal)} kcal left. A light snack like Greek yogurt or a small apple will close it out cleanly.` });
-  } else if (remCal > 600) {
-    items.push({ icon:'📈', color:'#3498db', msg:`${Math.round(remCal)} kcal remaining. You have room for a solid meal — lean protein and complex carbs would hit your targets well.` });
+  if (!t || !t.calories) {
+    panel.innerHTML = '<p class="muted" style="font-size:var(--text-sm);">Set your targets in the Goal Wizard to see suggestions.</p>';
+    return;
   }
-
-  if (overProt) {
-    items.push({ icon:'⚠️', color:'#e67e22', msg:`Protein is ${Math.round(totals.protein - t.protein)}g over target. Swap a protein-heavy item for something lighter like vegetables or fruit.` });
-  } else if (remProt > 30) {
-    items.push({ icon:'💪', color:'#9b59b6', msg:`${Math.round(remProt)}g of protein still needed. Good options: chicken breast, cottage cheese, eggs, or a protein shake.` });
-  }
-
-  if (overFat) {
-    items.push({ icon:'⚠️', color:'#e67e22', msg:`Fat is ${Math.round(totals.fat - t.fat)}g over. Avoid fried foods and heavy dressings for the rest of the day.` });
-  } else if (remFat < 5 && !overFat) {
-    items.push({ icon:'✅', color:'#27ae60', msg:`Fat target is almost exactly on track. Keep it up.` });
-  }
-
-  if (overCarb) {
-    items.push({ icon:'⚠️', color:'#e67e22', msg:`Carbs are ${Math.round(totals.carbs - t.carbs)}g over. Stick to protein and vegetables for your remaining meals.` });
-  } else if (remCarb > 50) {
-    items.push({ icon:'🍚', color:'#16a085', msg:`${Math.round(remCarb)}g of carbs remaining. Rice, oats, sweet potato, or fruit are clean options to fill this.` });
-  }
-
-  if (items.length === 0) {
-    items.push({ icon:'🎯', color:'#27ae60', msg:`You are right on track for today. Keep your next meal balanced and you will hit all your targets.` });
-  }
-
-  panel.innerHTML = items.map(i =>
-    `<div style="display:flex;gap:.6rem;align-items:flex-start;padding:.6rem .75rem;border-radius:var(--radius-md);background:var(--color-surface-2)">
-      <span style="font-size:1.1rem;flex-shrink:0">${i.icon}</span>
-      <span style="font-size:var(--text-sm);line-height:1.55">${i.msg}</span>
-    </div>`
-  ).join('');
+  const ctx   = analyzeSuggestionContext(date);
+  const plan  = planSuggestions(ctx);
+  const translated = plan.map(card => translateSuggestion(ctx, card));
+  renderSuggestionCards(translated);
 }
 
-// Re-run recommendations after every renderSummary call
-const _origRenderSummary = window.renderSummary;
+// hook into renderSummary so suggestions update every time macros change
 if (typeof renderSummary === 'function') {
   const _orig = renderSummary;
   window.renderSummary = function() { _orig(); buildRecos(); };
@@ -2435,87 +2843,10 @@ if (typeof renderSummary === 'function') {
 }
 document.addEventListener('DOMContentLoaded', buildRecos);
 
+
 // ── Better search: merged USDA + OFF with dedup and sorted display ──────────
 window._origSearchUSDA = window.searchUSDA;
 window._origSearchOFF  = window.searchOFF;
-
-async function dualSearch(query) {
-  if (!query) return;
-  const box = document.getElementById('searchResults');
-  if (box) { box.style.display = 'block'; box.innerHTML = '<div class="loading-row"><span class="spinner"></span> Searching…</div>'; }
-
-  let usdaFoods = [], offFoods = [];
-  await Promise.allSettled([
-    (async () => {
-      try {
-        const res = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${USDA_KEY}&query=${encodeURIComponent(query)}&dataType=Foundation,SR%20Legacy,Branded,Survey%20(FNDDS)&pageSize=25`);
-        const d = await res.json();
-        usdaFoods = d.foods || [];
-      } catch(e) {}
-    })(),
-    (async () => {
-      try {
-        const res = await fetch(`https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(query)}&page_size=20&fields=product_name,brands,nutriments,serving_size,serving_quantity&json=true`);
-        const d = await res.json();
-        const normalize = p => {
-          const n = p.nutriments || {};
-          return {
-            fdcId: null, _source:'off', description: p.product_name + (p.brands ? ` (${p.brands})` : ''),
-            brandOwner: p.brands || 'Open Food Facts',
-            foodNutrients: [
-              { nutrientId:1008, value: n['energy-kcal_100g'] || (n['energy_100g']||0)/4.18 },
-              { nutrientId:1003, value: n['proteins_100g'] || 0 },
-              { nutrientId:1005, value: n['carbohydrates_100g'] || 0 },
-              { nutrientId:1004, value: n['fat_100g'] || 0 },
-              { nutrientId:1079, value: n['fiber_100g'] || 0 },
-            ]
-          };
-        };
-        offFoods = (d.products||[]).filter(p=>p.product_name).map(normalize);
-      } catch(e) {}
-    })()
-  ]);
-
-  // Interleave: 2 USDA, 1 OFF, repeat — keeps variety visible at top
-  const merged = [];
-  const maxLen = Math.max(usdaFoods.length, offFoods.length);
-  let u = 0, o = 0;
-  while (u < usdaFoods.length || o < offFoods.length) {
-    if (u < usdaFoods.length) { merged.push(usdaFoods[u++]); }
-    if (u < usdaFoods.length) { merged.push(usdaFoods[u++]); }
-    if (o < offFoods.length)  { merged.push({...offFoods[o++], _source:'off'}); }
-  }
-
-  if (merged.length === 0) {
-    if (box) box.innerHTML = '<div class="search-hint">No results found. Try a shorter or different name.</div>';
-    return;
-  }
-  if (typeof renderResults === 'function') {
-    // Render merged — pass source per item via _source flag
-    if (box) box.innerHTML = '';
-    const srcLabel = s => s === 'off' ? '<span style="font-size:.7rem;padding:.1rem .4rem;border-radius:4px;background:var(--color-surface-offset);color:var(--color-text-muted);margin-left:.4rem;">OFF</span>' : '';
-    merged.forEach(food => {
-      const item = document.createElement('div');
-      item.className = 'search-result-item';
-      item.setAttribute('role','option');
-      const cal  = getNutrientValue(food.foodNutrients, 1008);
-      const pro  = getNutrientValue(food.foodNutrients, 1003);
-      const carb = getNutrientValue(food.foodNutrients, 1005);
-      const fat  = getNutrientValue(food.foodNutrients, 1004);
-      const serving = food.servingSize ? ` · ${food.servingSize}${food.servingSizeUnit||'g'}` : '';
-      const brand = food.brandOwner || '';
-      item.innerHTML = `
-        <div class="sri-name">${escHtml(food.description||'')}${srcLabel(food._source||'')}</div>
-        <div class="sri-meta">${escHtml(brand)}${serving}</div>
-        <div class="sri-macros">${cal} kcal · P ${pro}g · C ${carb}g · F ${fat}g per 100g</div>`;
-      item.addEventListener('click', () => selectFood(food));
-      if (box) box.appendChild(item);
-    });
-    if (box) box.style.display = 'block';
-  }
-}
-
-// Wire the search button to dualSearch
 </script>
 <style>
 .active-range { background: var(--color-primary) !important; color: #fff !important; }
