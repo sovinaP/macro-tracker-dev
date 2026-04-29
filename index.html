@@ -858,6 +858,7 @@ const _manualForm = document.getElementById('foodForm');
 
 // init
 $('datePicker').value = todayStr;
+$('datePicker').max = todayStr;
 applyTheme(state.settings.theme || 'light');
 fillTargetInputs();
 $('mealType').value = state.settings.lastMeal || 'Breakfast';
@@ -1171,19 +1172,64 @@ bindClick('clearFood', () => {
 
 bindSubmit('foodForm', e => {
   e.preventDefault();
+
+  // ── Validation ──────────────────────────────────────────────
+  const name     = $('foodName').value.trim();
+  const calories = Math.ceil(num('foodCalories'));
+  const protein  = num('foodProtein');
+  const carbs    = num('foodCarbs');
+  const fat      = num('foodFat');
+  const fiber    = num('foodFiber');
+  const date     = $('datePicker').value;
+
+  // Name required
+  if (!name) {
+    showToast('⚠️ Enter a food name before adding.');
+    $('foodName').focus();
+    return;
+  }
+
+  // Calories must be a positive number
+  if (!calories || calories <= 0) {
+    showToast('⚠️ Calories must be greater than zero.');
+    $('foodCalories').focus();
+    return;
+  }
+
+  // Sanity cap — 10,000 kcal single entry is almost certainly a typo
+  if (calories > 9999) {
+    showToast('⚠️ That calorie value looks too high. Double-check the amount.');
+    $('foodCalories').focus();
+    return;
+  }
+
+  // No negative macros
+  if (protein < 0 || carbs < 0 || fat < 0 || fiber < 0) {
+    showToast('⚠️ Macro values cannot be negative.');
+    return;
+  }
+
+  // No future dates
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  if (date && new Date(date + 'T00:00:00') > today) {
+    showToast('⚠️ Cannot log food for a future date.');
+    return;
+  }
+
+  // ── Build entry ─────────────────────────────────────────────
   const entry = {
-    id: crypto.randomUUID(),
-    name: $('foodName').value.trim(),
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    name,
     meal: $('mealType').value,
-    calories: Math.ceil(num('foodCalories')),
-    protein: num('foodProtein'),
-    carbs: num('foodCarbs'),
-    fat: num('foodFat'),
-    fiber: num('foodFiber'),
+    calories,
+    protein,
+    carbs,
+    fat,
+    fiber,
     createdAt: new Date().toISOString(),
     nutrients: selectedFoodData ? selectedFoodData.nutrients : []
   };
-  const date = $('datePicker').value;
   if(!state.entries[date]) state.entries[date] = [];
   state.entries[date].push(entry);
   saveState();
@@ -1225,7 +1271,8 @@ bindSubmit('targetForm', e => {
 bindSubmit('weightForm', e => {
   e.preventDefault();
   const w = parseFloat($('weightInput').value);
-  if(!w){ showToast('Enter a weight value.'); return; }
+  if(!w || w <= 0) { showToast('Enter a valid weight value.'); return; }
+  if(w > 2000) { showToast('That weight looks too high — check the units.'); return; }
   const date = $('datePicker').value;
   state.weights[date] = { value:w, unit:$('weightUnit').value };
   state.settings.weightUnit = $('weightUnit').value;
@@ -1946,7 +1993,14 @@ bindClick('confirmSaveTemplate', () => {
   showToast(`Template "${name}" saved.`);
 });
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {
+    showToast('⚠️ Storage full — clear some data or export a backup.');
+    console.error('saveState failed:', e);
+  }
+}
 
 // ── MICRO HELPERS ────────────────────────────────────────────────────────
 function getDayMicroTotals(date, nutrientId) {
@@ -2547,7 +2601,7 @@ async function dualSearch(query) {
     </button>
     <button class="tab-item" id="tab-log" onclick="setActiveTab('log')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Food Log
+      Log
     </button>
     <button class="tab-add" id="tab-add-btn" onclick="setActiveTab('log',true)" aria-label="Add food">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
